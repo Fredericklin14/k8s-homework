@@ -1,0 +1,44 @@
+# for old k8s cluster: 
+# apiVersion: extensions/v1beta1
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: fluentd-daemonset-1
+  labels:
+    app: nginx
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  minReadySeconds: 5
+  template:
+    metadata:
+      name: nginx-pod
+      namespace: default
+      labels:
+        app: nginx
+        backend: python
+    spec:
+      containers:
+      - image: nginx:latest
+        imagePullPolicy: Always
+        name: nginx
+        ports:
+          - containerPort: 80
+            protocol: TCP
+        volumeMounts:
+        - mountPath: /var/log/nginx/
+          name: log-volume
+      - image: tachingchen/fluentd:0.1
+        name: fluentd
+        imagePullPolicy: Always
+        volumeMounts:
+        - mountPath: /var/log/nginx/
+          name: log-volume
+      volumes:
+      - name: log-volume
+        emptyDir: {}
